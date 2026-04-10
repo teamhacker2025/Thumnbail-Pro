@@ -1,163 +1,298 @@
-<script>
-    const ADMIN_ID = "Ashish@2007";
-const ADMIN_PASS = "Ashish@2025";
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Pro - YouTube Thumbnail Downloader</title>
 
-/* Load saved ads */
-let ads = JSON.parse(localStorage.getItem("adsConfig")) || {
-    top: "",
-    bottom: "",
-    left: "",
-    right: "",
-    image: ""
-};
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-/* Detect admin route */
-if (window.location.hash === "#admin") {
-    showLogin();
-}
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background:#050505;
+            color:#fff;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            padding:20px;
+        }
 
-/* ================= LOGIN ================= */
-function showLogin() {
-    const login = document.createElement("div");
+        nav {
+            width:100%;
+            max-width:1000px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:20px 0;
+        }
 
-    login.style = `
-        position:fixed;
-        top:0;left:0;
-        width:100%;height:100%;
-        background:rgba(0,0,0,0.9);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        z-index:99999;
-    `;
+        .logo {
+            font-size:20px;
+            font-weight:700;
+        }
 
-    login.innerHTML = `
-        <div style="background:#111;padding:20px;border-radius:12px;width:300px;">
-            <h3 style="color:#fff;">Admin Login</h3>
+        .hero {
+            text-align:center;
+            margin:30px 0;
+        }
 
-            <input id="aid" placeholder="Admin ID"
-                style="width:100%;padding:10px;margin:10px 0;">
+        .hero h1 {
+            font-size:40px;
+        }
 
-            <input id="apass" type="password" placeholder="Password"
-                style="width:100%;padding:10px;margin-bottom:10px;">
+        .gradient {
+            background:linear-gradient(90deg,#9d50bb,#ff00cc);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+        }
 
-            <button onclick="loginAdmin()"
-                style="width:100%;padding:10px;background:#e91e63;color:#fff;border:none;">
-                Login
-            </button>
-        </div>
-    `;
+        .card {
+            width:100%;
+            max-width:700px;
+            background:#0f0f0f;
+            border:1px solid #222;
+            padding:20px;
+            border-radius:15px;
+            margin-top:20px;
+        }
 
-    document.body.appendChild(login);
-}
+        input {
+            width:100%;
+            padding:15px;
+            border-radius:10px;
+            border:1px solid #333;
+            background:#111;
+            color:#fff;
+            outline:none;
+        }
 
-/* ================= LOGIN CHECK ================= */
-function loginAdmin() {
-    const id = document.getElementById("aid").value;
-    const pass = document.getElementById("apass").value;
+        button {
+            margin-top:10px;
+            padding:15px;
+            width:100%;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#e91e63,#880e4f);
+            color:#fff;
+            cursor:pointer;
+        }
 
-    if (id === ADMIN_ID && pass === ADMIN_PASS) {
-        document.getElementById("aid").parentElement.parentElement.remove();
-        openAdminPanel();
-    } else {
-        alert("Wrong Credentials!");
-    }
-}
+        #resultArea {
+            display:none;
+            text-align:center;
+        }
 
-/* ================= ADMIN PANEL (NO WHITE SCREEN FIX) ================= */
-function openAdminPanel() {
-    const panel = document.createElement("div");
+        img {
+            width:100%;
+            border-radius:10px;
+            margin-top:10px;
+        }
+    </style>
+</head>
 
-    panel.id = "adminPanel";
+<body>
 
-    panel.style = `
-        position:fixed;
-        top:0;left:0;
-        width:100%;height:100%;
-        background:#000;
-        color:#fff;
-        z-index:99998;
-        overflow:auto;
-        padding:20px;
-    `;
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">Thumbnail <span style="color:#ff00cc;">Pro</span></div>
+    </nav>
 
-    panel.innerHTML = `
-        <h2>Admin Panel</h2>
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Download <span class="gradient">YouTube Thumbnail</span></h1>
+        <p>HD & 4K thumbnails instantly</p>
+    </div>
 
-        <h3>Top Ad Script</h3>
-        <textarea id="topAd" style="width:100%;height:80px;">${ads.top}</textarea>
+    <!-- INPUT CARD -->
+    <div class="card">
+        <input type="text" id="videoUrl" placeholder="Paste YouTube URL">
+        <button onclick="generateThumbnail()">Extract Thumbnail</button>
+    </div>
 
-        <h3>Bottom Ad Script</h3>
-        <textarea id="bottomAd" style="width:100%;height:80px;">${ads.bottom}</textarea>
+    <!-- RESULT -->
+    <div class="card" id="resultArea">
+        <h3>Thumbnail</h3>
+        <img id="thumbImg" src="">
+        <button onclick="downloadThumb()">Download</button>
+    </div>
 
-        <h3>Left Ad Script</h3>
-        <textarea id="leftAd" style="width:100%;height:80px;">${ads.left}</textarea>
+    <!-- ================= YOUR SCRIPT START ================= -->
+    <script>
+        const ADMIN_ID = "Ashish@2007";
+        const ADMIN_PASS = "Ashish@2025";
 
-        <h3>Right Ad Script</h3>
-        <textarea id="rightAd" style="width:100%;height:80px;">${ads.right}</textarea>
+        /* Load saved ads */
+        let ads = JSON.parse(localStorage.getItem("adsConfig")) || {
+            top: "",
+            bottom: "",
+            left: "",
+            right: "",
+            image: ""
+        };
 
-        <h3>Image Below Ad</h3>
-        <textarea id="imgAd" style="width:100%;height:80px;">${ads.image}</textarea>
+        /* Detect admin route */
+        if (window.location.hash === "#admin") {
+            showLogin();
+        }
 
-        <br><br>
+        /* ================= LOGIN ================= */
+        function showLogin() {
+            const login = document.createElement("div");
 
-        <button onclick="saveAds()" style="padding:10px;background:green;color:#fff;border:none;">
-            Save Ads
-        </button>
+            login.style = `
+                position:fixed;
+                top:0;left:0;
+                width:100%;height:100%;
+                background:rgba(0,0,0,0.9);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                z-index:99999;
+            `;
 
-        <button onclick="deleteAds()" style="padding:10px;background:red;color:#fff;border:none;">
-            Delete Ads
-        </button>
+            login.innerHTML = `
+                <div style="background:#111;padding:20px;border-radius:12px;width:300px;">
+                    <h3 style="color:#fff;">Admin Login</h3>
 
-        <button onclick="closeAdmin()" style="padding:10px;background:gray;color:#fff;border:none;">
-            Close
-        </button>
-    `;
+                    <input id="aid" placeholder="Admin ID"
+                        style="width:100%;padding:10px;margin:10px 0;">
 
-    document.body.appendChild(panel);
-}
+                    <input id="apass" type="password" placeholder="Password"
+                        style="width:100%;padding:10px;margin-bottom:10px;">
 
-/* ================= CLOSE ADMIN ================= */
-function closeAdmin() {
-    document.getElementById("adminPanel").remove();
-}
+                    <button onclick="loginAdmin()"
+                        style="width:100%;padding:10px;background:#e91e63;color:#fff;border:none;">
+                        Login
+                    </button>
+                </div>
+            `;
 
-/* ================= SAVE ADS ================= */
-function saveAds() {
-    ads = {
-        top: document.getElementById("topAd").value,
-        bottom: document.getElementById("bottomAd").value,
-        left: document.getElementById("leftAd").value,
-        right: document.getElementById("rightAd").value,
-        image: document.getElementById("imgAd").value
-    };
+            document.body.appendChild(login);
+        }
 
-    localStorage.setItem("adsConfig", JSON.stringify(ads));
+        /* ================= LOGIN CHECK ================= */
+        function loginAdmin() {
+            const id = document.getElementById("aid").value;
+            const pass = document.getElementById("apass").value;
 
-    alert("Ads Saved Permanently!");
-    location.reload();
-}
+            if (id === ADMIN_ID && pass === ADMIN_PASS) {
+                document.getElementById("aid").parentElement.parentElement.remove();
+                openAdminPanel();
+            } else {
+                alert("Wrong Credentials!");
+            }
+        }
 
-/* ================= DELETE ADS ================= */
-function deleteAds() {
-    localStorage.removeItem("adsConfig");
-    alert("Ads Deleted!");
-    location.reload();
-}
+        /* ================= ADMIN PANEL ================= */
+        function openAdminPanel() {
+            const panel = document.createElement("div");
 
-/* ================= RENDER ADS ================= */
-function injectAd(code) {
-    if (!code) return;
+            panel.id = "adminPanel";
 
-    const div = document.createElement("div");
-    div.innerHTML = code;
-    document.body.appendChild(div);
-}
+            panel.style = `
+                position:fixed;
+                top:0;left:0;
+                width:100%;height:100%;
+                background:#000;
+                color:#fff;
+                z-index:99998;
+                overflow:auto;
+                padding:20px;
+            `;
 
-window.addEventListener("load", () => {
-    injectAd(ads.top);
-    injectAd(ads.bottom);
-    injectAd(ads.left);
-    injectAd(ads.right);
-});
-</script>
+            panel.innerHTML = `
+                <h2>Admin Panel</h2>
+
+                <h3>Top Ad Script</h3>
+                <textarea id="topAd" style="width:100%;height:80px;">${ads.top}</textarea>
+
+                <h3>Bottom Ad Script</h3>
+                <textarea id="bottomAd" style="width:100%;height:80px;">${ads.bottom}</textarea>
+
+                <h3>Left Ad Script</h3>
+                <textarea id="leftAd" style="width:100%;height:80px;">${ads.left}</textarea>
+
+                <h3>Right Ad Script</h3>
+                <textarea id="rightAd" style="width:100%;height:80px;">${ads.right}</textarea>
+
+                <h3>Image Below Ad</h3>
+                <textarea id="imgAd" style="width:100%;height:80px;">${ads.image}</textarea>
+
+                <br><br>
+
+                <button onclick="saveAds()" style="padding:10px;background:green;color:#fff;border:none;">
+                    Save Ads
+                </button>
+
+                <button onclick="deleteAds()" style="padding:10px;background:red;color:#fff;border:none;">
+                    Delete Ads
+                </button>
+
+                <button onclick="closeAdmin()" style="padding:10px;background:gray;color:#fff;border:none;">
+                    Close
+                </button>
+            `;
+
+            document.body.appendChild(panel);
+        }
+
+        function closeAdmin() {
+            document.getElementById("adminPanel").remove();
+        }
+
+        function saveAds() {
+            ads = {
+                top: document.getElementById("topAd").value,
+                bottom: document.getElementById("bottomAd").value,
+                left: document.getElementById("leftAd").value,
+                right: document.getElementById("rightAd").value,
+                image: document.getElementById("imgAd").value
+            };
+
+            localStorage.setItem("adsConfig", JSON.stringify(ads));
+
+            alert("Ads Saved Permanently!");
+            location.reload();
+        }
+
+        function deleteAds() {
+            localStorage.removeItem("adsConfig");
+            alert("Ads Deleted!");
+            location.reload();
+        }
+
+        function injectAd(code) {
+            if (!code) return;
+            const div = document.createElement("div");
+            div.innerHTML = code;
+            document.body.appendChild(div);
+        }
+
+        window.addEventListener("load", () => {
+            injectAd(ads.top);
+            injectAd(ads.bottom);
+            injectAd(ads.left);
+            injectAd(ads.right);
+        });
+
+        /* Dummy functions (avoid errors) */
+        function generateThumbnail(){
+            const url = document.getElementById("videoUrl").value;
+            const id = url.split("v=")[1];
+            if(!id) return alert("Invalid URL");
+
+            document.getElementById("resultArea").style.display = "block";
+            document.getElementById("thumbImg").src =
+                `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+        }
+
+        function downloadThumb(){
+            const img = document.getElementById("thumbImg").src;
+            window.open(img, "_blank");
+        }
+    </script>
+
+</body>
+</html>
